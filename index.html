@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <link rel="stylesheet" href="CSS/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="app">
+        <aside class="side-bar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-heading">Library</h3>
+                <ul class="sidebar-nav">
+                    <li class="nav-item active" data-view="songs">
+                        <i class="fa-solid fa-music"></i> Songs
+                    </li>
+                    <li class="nav-item" data-view="artists">
+                        <i class="fa-solid fa-microphone"></i>Artsist
+                    </li>
+                    <li class="nav-item" data-view="albums">
+                        <i class="fa-solid fa-record-vinyl"></i>Album
+                    </li>
+                    <li class="nav-item" data-view="favourites">
+                        <i class="fa-solid fa-heart"></i>Favourites
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-heading-row">
+                    <h3 class="sidebar-heading">Playlist</h3>
+                    <button id="btn-new-playlist">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <ul class="sidebar-nav" id="playlist-list">
+
+                </ul>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="track-section">
+                <div class='view' id='view-songs'>
+                    <div class='view-header'>
+                        <img class='view-cover' src='' alt='Cover' />
+                        <div>
+                            <p class='view-label'>Songs</p>
+                            <h1 class='view-title'>Songs #1</h1>
+                            <p class='view-meta'>9 songs · 32 min</p>
+                        </div>
+                    </div>
+
+                    <table class='track-table'>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Artist</th>
+                                <th><i class='fa-regular fa-clock'></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id='track-list-body'>
+                            
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Other views — hidden by default -->
+                <div class='view' id='view-artists' hidden>...</div>
+                <div class='view' id='view-albums' hidden>...</div>
+                <div class='view' id='view-favourites' hidden>...</div>
+            </div>
+
+
+            <section class="now-playing">
+                <img id='np-cover' class='np-cover' src='Assest/CoverImage/album-placeholder.png' alt='' />
+
+                <div class='np-info'>
+                    <h2 id='np-title'>Track Title</h2>
+                    <p id='np-artist'>Artist</p>
+                </div>
+
+                <!-- Progress -->
+                <div class='progress-bar'>
+                    <span id='current-time'>0:00</span>
+                    <input type='range' id='progress-bar' value='0' min='0' max='100' />
+                    <span id='song-duration'>0:00</span>
+                </div>
+
+                <!-- Controls -->
+                <div class='np-controls'>
+                    <button class='ctrl-btn' id='btn-shuffle'>
+                        <i class='fa-solid fa-shuffle'></i>
+                    </button>
+                    <button class='ctrl-btn' id='prev-btn'>
+                        <i class='fa-solid fa-backward-step'></i>
+                    </button>
+                    <button class='ctrl-btn play-btn'>
+                        <i class='fa-solid fa-play' id='play-icon'></i>
+                    </button>
+                    <button class='ctrl-btn' id='next-btn'>
+                        <i class='fa-solid fa-forward-step'></i>
+                    </button>
+                    <button class='ctrl-btn' id='repeat-btn'>
+                        <i class='fa-solid fa-repeat'></i>
+                        <span id='repeat-badge'>1</span>
+                    </button>
+                </div>
+
+                <div class='np-volume'>
+                    <button class='ctrl-btn' id='mute-btn'>
+                        <i class='fa-solid fa-volume-high' id='vol-icon'></i>
+                    </button>
+                    <input type='range' id='volume' value='80' min='0' max='100' />
+                </div>
+            </section>
+        </main>
+        <audio id="audio-player"></audio>
+    </div>
+
+
+    <script src="Script/player.js"></script>
+    <script src="Script/sidebar.js"></script>
+    <script src="Script/track.js"></script>
+    <script src="Script/ui.js"></script>
+</body>
+
+</html>
