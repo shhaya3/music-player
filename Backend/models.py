@@ -3,20 +3,20 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-class User(db.model):
+class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.integer, primary_key = True)
-    username = db.Column(db.string(80), unique=True, nullable=False)
-    email = db.Column(db.string(150), unique=True, nullable=False)
-    password_hash = db.Column(db.string(200), nullable=False)
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     playlists = db.relationship('Playlist', backref='owner', lazy=True, cascade='all, delete')
     favourites = db.relationship('Favourite', backref='user', lazy=True, cascade='all, delete')
 
 class Songs(db.Model):
-    __tablename__ = 'Songs'
+    __tablename__ = 'songs'
 
     id          = db.Column(db.Integer,     primary_key=True)
     title       = db.Column(db.String(200), nullable=False)
@@ -41,20 +41,20 @@ class Songs(db.Model):
             'artist':   self.artist,
             'album':    self.album,
             'duration': self.duration,
-            'src':    self.file_url or f'{base_url}/api/stream/{self.filename}',
+            'src':    f'{base_url}/api/stream/{self.id}',
             'cover':  self.cover_url or f'{base_url}/api/covers/default.jpg'
         }
 
-class Playlist(db.model):
-    __tablename__ = 'Playlists'
+class Playlist(db.Model):
+    __tablename__ = 'playlists'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    songs = db.relationship('PlaylistSong', backref='playlist', lazy=True, cascade='all, delete')
+    songs = db.relationship('PlaylistSongs', backref='playlist', lazy=True, cascade='all, delete')
 
-class PlaylistSongs(db.model):
+class PlaylistSongs(db.Model):
     __tablename__ = 'playlist_songs'
  
     id          = db.Column(db.Integer, primary_key=True)

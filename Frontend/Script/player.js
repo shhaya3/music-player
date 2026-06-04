@@ -9,7 +9,6 @@ const progressBar = document.getElementById("progress-bar");
 const repeatBtn = document.querySelector("#repeat-btn");
 const repeatBadge = document.getElementById("repeat-badge");
 
-
 function loadTrack(i) {
     const track = TRACKS[i];
     currentIndex = i;

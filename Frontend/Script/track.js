@@ -1,10 +1,39 @@
-const TRACKS = [
-  { title: 'あぶく', artist: 'Yorushika', duration: '3:54', src: 'Assest/Songs/あぶく.flac', cover: "Assest/CoverImage/Cover.jpg" },
-  { title: 'Dasvidaniya', artist: 'Wuthering Waves', duration: '2:56', src: 'Assest/Songs/Dasvidaniya.flac', cover: "Assest/CoverImage/dasvidaniya-cover.jpg"},
-];
+let TRACKS = [];
+let currentIndex = 0;
+
+async function loadLibrary() {
+  try{
+    const res = await fetch('http://localhost:5000/api/songs');
+    TRACKS = await res.json();
+    renderTrackList();
+    if(TRACKS.length > 0) loadTrack(0);
+
+  } catch(err) {
+    console.log('cannot reach backend', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadLibrary);
+let search = document.getElementById('search');
+
+let searchTimer;
+search.addEventListener("imput", e => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(async () => {
+    const q = e.target.value.trim();
+    if (!q) {loadLibrary(); return; }
+    const res = await fetch(`http://localhost:5000/api/songs/search?q=${encodeURIComponent(q)}`);
+    TRACKS = await res.json();
+    renderTrackList();
+  }, 300);
+});
+
+
+
+
 const trackTable = document.querySelectorAll('.track-table tr');
  
-let currentIndex = 0;
+
  
 function renderTrackList() {
   const tbody = document.getElementById('track-list-body');
