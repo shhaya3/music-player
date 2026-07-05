@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, current_app
 from models import db, Songs, Favourite
 from routes.auth import token_required
 from models import Favourite
+import re
 
 songs_bp = Blueprint('songs', __name__)
 
@@ -30,25 +31,49 @@ def search():
     base_url = current_app.config['BASE_URL']
     return jsonify([s.to_dict(base_url) for s in results])
 
+
+ARTIST_SPLIT_RE = re.compile(r'\s*[;・]\s*')
 @songs_bp.route('/api/artists')
 def get_artists():
-    artists = db.session.query(Songs.artist).distinct().order_by(Songs.artist).all()
-    return jsonify([a[0] for a in artists])
+    rows = db.session.query(Songs.artist).all()
+    counts = {}
+    for (artist_field,) in rows:
+        main = ARTIST_SPLIT_RE.split(artist_field, maxsplit=1)[0].strip()
+        counts[main] = counts.get(main, 0) + 1
+
+    artists = sorted(counts.items(), key=lambda kv: kv[0].lower())
+    return jsonify([{'artist': a, 'count': c} for a, c in artists])
+
+@songs_bp.route('/api/artists/songs/<path:artist>')
+def get_artists_songs(artist):
+    songs = Songs.query.filter(Songs.artist.ilike(f'%{artist}%')).order_by(Songs.title).all()
+    base_url = current_app.config['BASE_URL']
+    return jsonify([s.to_dict(base_url)for s in songs])
 
 @songs_bp.route('/api/albums')
 def get_albums():
-    albums = db.session.query(Songs.album).distinct().order_by(Songs.album).all()
-    return jsonify([{'album':a[0], 'artist':a[1]}for a in albums]) 
+    albums = db.session.query(
+        Songs.album,
+        Songs.artist,
+        db.func.count(Songs.id).label('count')
+    ).group_by(Songs.album, Songs.artist).order_by(Songs.album).all()
+    return jsonify([{'album': a[0], 'artist': a[1], 'count': a[2]} for a in albums])
+
+@songs_bp.route('/api/albums/songs/<path:album>')
+def get_album_songs(album):
+    songs    = Songs.query.filter(Songs.album.ilike(f'%{album}%')).order_by(Songs.title).all()
+    base_url = current_app.config['BASE_URL']
+    return jsonify([s.to_dict(base_url) for s in songs])
 
 @songs_bp.route('/api/favourites')
 @token_required
-def get_facourites(current_user):
+def get_favourites(current_user):
     favs = Favourite.query.filter_by(user_id = current_user.id).all()
     base_url = current_app.config['BASE_URL']
-    songs = [Songs.query.get(f.songs_id).to_dict(base_url) for f in favs]
+    songs = [Songs.query.get(f.song_id).to_dict(base_url) for f in favs]
     return jsonify(songs)
 
-@songs_bp.route('/api/facourites/<int:song_id>',methods=['POST'])
+@songs_bp.route('/api/favourites/<int:song_id>',methods=['POST'])
 @token_required
 def add_favourite(current_user, song_id):
     fav = Favourite(user_id=current_user.id, song_id=song_id)
@@ -56,16 +81,24 @@ def add_favourite(current_user, song_id):
     try:
         db.session.commit()
     except Exception:
-        db.session.rollback
-    return jsonify({'message:''Added To Favourites'})
+        db.session.rollback()
+    return jsonify({'message': 'Added To Favourites'})
 
 @songs_bp.route('/api/admin/scan')
-def scan():
-    from utils.scanner import scan_music_folder
+@token_required
+def scan(current_user):
+    from utils.scanner import scan_music_folder, cleanup_missing_songs
+
+    removed = cleanup_missing_songs(current_app.config['MUSIC_DIR'])
+
     added, errors = scan_music_folder(
         current_app.config['MUSIC_DIR'],
         current_app.config['COVERS_DIR'],
         current_app.config['BASE_URL']
     )
 
-    return jsonify({'added':added, 'errors': errors})
+    return jsonify({
+        'added':added,
+        'removed': removed,
+        'errors': errors
+    })

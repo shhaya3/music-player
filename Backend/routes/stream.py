@@ -4,6 +4,15 @@ from models import Songs
 
 stream_bp = Blueprint('stream', __name__)
 
+
+def _is_within(path, root):
+    """
+    True only if `path` is actually inside `root` — not just string-prefixed by it.
+    (e.g. '/app/covers_evil' starts with '/app/covers' as a string, but isn't inside it.)
+    """
+    return path == root or path.startswith(root + os.sep)
+
+
 @stream_bp.route('/api/stream/<int:song_id>')
 def stream_audio(song_id):
     """
@@ -21,7 +30,7 @@ def stream_audio(song_id):
     safe_path  = os.path.realpath(filepath)
     safe_music = os.path.realpath(music_dir)
 
-    if not safe_path.startswith(safe_music):
+    if not _is_within(safe_path, safe_music):
         abort(403)
 
     if not os.path.exists(safe_path):
@@ -51,7 +60,7 @@ def serve_cover(filename):
     safe_path   = os.path.realpath(filepath)
     safe_covers = os.path.realpath(covers_dir)
 
-    if not safe_path.startswith(safe_covers):
+    if not _is_within(safe_path, safe_covers):
         abort(403)
 
     if not os.path.exists(safe_path):

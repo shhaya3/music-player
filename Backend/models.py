@@ -11,6 +11,7 @@ class User(db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    lastfm_session_key    = db.Column(db.String(200), nullable=True)
 
     playlists = db.relationship('Playlist', backref='owner', lazy=True, cascade='all, delete')
     favourites = db.relationship('Favourite', backref='user', lazy=True, cascade='all, delete')
