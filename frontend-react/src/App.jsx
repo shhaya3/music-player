@@ -1,122 +1,123 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { useAuth } from './hooks/useAuth';
+import { useAudioPlayer } from './hooks/useAudioPlayer';
+import { fetchSongs, fetchArtistSongs, fetchAlbumSongs, fetchFavourites, fetchArtistImage } from './api';
+import Sidebar    from './components/sidebar';
+import TrackList  from './components/tracklist';
+import NowPlaying from './components/nowPlaying';
+import AuthModal  from './components/authModel';
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const auth   = useAuth();
+
+  const [tracks,       setTracks]       = useState([]);
+  const [view,         setView]         = useState('songs');
+  const [viewTitle,    setViewTitle]    = useState('Songs');
+  const [viewMeta,     setViewMeta]     = useState('');
+  const [viewCover,    setViewCover]    = useState('');
+  const [showModal,    setShowModal]    = useState(false);
+  const [bgImage,      setBgImage]      = useState('');
+
+  const player = useAudioPlayer(tracks);
+
+  // load songs on start
+  useEffect(() => {
+    loadView('songs');
+  }, []);
+
+  // set background from current track cover
+  useEffect(() => {
+    if (player.currentTrack?.cover) {
+      setBgImage(player.currentTrack.cover);
+    }
+  }, [player.currentTrack]);
+
+  async function loadView(viewName, param) {
+    setView(viewName);
+    let data = [];
+
+    if (viewName === 'songs') {
+      data = await fetchSongs();
+      setViewTitle('Songs');
+      setViewMeta(`${data.length} songs`);
+      setViewCover('');
+    } else if (viewName === 'artist') {
+      data = await fetchArtistSongs(param);
+      setViewTitle(param);
+      setViewMeta(`${data.length} songs`);
+      const img = await fetchArtistImage(param);
+      setViewCover(img || '');
+    } else if (viewName === 'album') {
+      data = await fetchAlbumSongs(param);
+      setViewTitle(param);
+      setViewMeta(`${data.length} songs`);
+      setViewCover(data[0]?.cover || '');
+    } else if (viewName === 'favourites') {
+      data = await fetchFavourites();
+      setViewTitle('Liked Songs');
+      setViewMeta(`${data.length} songs`);
+      setViewCover('');
+    }
+
+    setTracks(data);
+    if (data.length > 0) player.loadTrack(0);
+  }
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      {/* blurred background */}
+      <div
+        className="app"
+        style={bgImage ? { backgroundImage: `url('${bgImage}')` } : {}}
+      >
+        <Sidebar
+          auth={auth}
+          onViewChange={loadView}
+          onLoginClick={() => setShowModal(true)}
+        />
 
-      <div className="ticks"></div>
+        <main className="main-content">
+          <TrackList
+            tracks={tracks}
+            viewTitle={viewTitle}
+            viewMeta={viewMeta}
+            viewCover={viewCover}
+            currentIndex={player.currentIndex}
+            isPlaying={player.isPlaying}
+            onTrackClick={(i) => player.loadTrack(i)}
+            onArtistClick={(artist) => loadView('artist', artist)}
+            user={auth.user}
+          />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <NowPlaying
+            track={player.currentTrack}
+            isPlaying={player.isPlaying}
+            progress={player.progress}
+            currentTime={player.currentTime}
+            duration={player.duration}
+            volume={player.volume}
+            isMuted={player.isMuted}
+            isShuffled={player.isShuffled}
+            repeatMode={player.repeatMode}
+            onPlayPause={player.playPause}
+            onNext={player.next}
+            onPrev={player.prev}
+            onSeek={player.seek}
+            onVolumeChange={player.setVolume}
+            onMute={player.toggleMute}
+            onShuffle={player.toggleShuffle}
+            onRepeat={player.cycleRepeat}
+          />
+        </main>
+      </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      {showModal && (
+        <AuthModal
+          auth={auth}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
-  )
+  );
 }
-
-export default App
