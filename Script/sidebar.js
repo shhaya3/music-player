@@ -26,7 +26,7 @@ function loadView(viewName) {
 }
 
 async function loadArtistsView() {
-  const res  = await fetch('/api/artists');
+  const res  = await fetch('http://localhost:5000/api/artists');
   const data = await res.json();
   tbody.innerHTML = '';
   data.forEach(a => {
