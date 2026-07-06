@@ -15,7 +15,7 @@ async function getArtistImg(artistName) {
 
   
   try {
-  const res = await fetch(`http://localhost:5000/api/spotify/artist-image/${encodeURIComponent(artistName)}`);
+  const res = await fetch(`/api/spotify/artist-image/${encodeURIComponent(artistName)}`);
   const data = await res.json();
 
   return data.image || null;
@@ -28,7 +28,7 @@ async function getArtistImg(artistName) {
 
 async function loadAlbumSongs(album) {
   try {
-    const res = await fetch(`http://localhost:5000/api/albums/songs/${encodeURIComponent(album)}`);
+    const res = await fetch(`/api/albums/songs/${encodeURIComponent(album)}`);
     TRACKS = await res.json();
 
     title.textContent = album;
@@ -42,7 +42,7 @@ async function loadAlbumSongs(album) {
 
 async function loadArtistSongs(artist) {
   try {
-    const res = await fetch(`http://localhost:5000/api/artists/songs/${encodeURIComponent(artist)}`);
+    const res = await fetch(`/api/artists/songs/${encodeURIComponent(artist)}`);
     TRACKS = await res.json();
     title.textContent = artist;
     songNo.textContent = `${TRACKS.length} songs`;
@@ -66,7 +66,7 @@ async function loadArtistSongs(artist) {
 
 async function loadLibrary() {
   try {
-    const res = await fetch('http://localhost:5000/api/songs');
+    const res = await fetch('/api/songs');
     TRACKS = await res.json();
     renderTrackList();
     if (TRACKS.length > 0) loadTrack(0);
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function addToFavourites(songId) {
   try {
-    const res  = await fetch(`http://localhost:5000/api/favourites/${songId}`, {
+    const res  = await fetch(`/api/favourites/${songId}`, {
       method: 'POST',
       headers: authHeaders()
     });
@@ -143,7 +143,7 @@ async function showPlaylistPicker(songId) {
     return;
   }
 
-  const res       = await fetch('http://localhost:5000/api/playlists', { headers: authHeaders() });
+  const res       = await fetch('/api/playlists', { headers: authHeaders() });
   const playlists = await res.json();
 
   if (!playlists.length) {
@@ -174,7 +174,7 @@ async function showPlaylistPicker(songId) {
     item.addEventListener('click', async (e) => {
       e.stopPropagation();
       const pid = item.dataset.playlistId;
-      await fetch(`http://localhost:5000/api/playlists/${pid}/songs`, {
+      await fetch(`/api/playlists/${pid}/songs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ song_id: parseInt(songId) })
