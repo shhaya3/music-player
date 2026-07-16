@@ -50,6 +50,3 @@ if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
     app.run(debug=debug_mode)
 
-@app.route('/api/hello', methods=['GET'])
-def hello():
-    return {"message": "Flask is officially awake and routing works!"}

@@ -4,7 +4,6 @@ const loggedOutView   = document.getElementById('logged-out-view');
 const loggedInView    = document.getElementById('logged-in-view');
 const profileUsername = document.getElementById('profile-username');
 const authModal        = document.getElementById('auth-modal');
-const lastfmStatus     = document.getElementById('lastfm-status');
 const loginBtn          = document.getElementById('btn-login');
 const modalClose         = document.getElementById('close-modal');
 const tabBtn            = document.querySelectorAll('.tab-btn');
@@ -82,6 +81,7 @@ document.getElementById('submit-login').addEventListener('click', async () => {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     await loginUser(username, password);
+    loadPlaylists();
 });
 
 async function loginUser(username, password) {
@@ -114,6 +114,7 @@ document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     updateProfileUI();
+    loadPlaylists();
 });
 
 // ── Update sidebar based on login state ──
@@ -130,6 +131,8 @@ function updateProfileUI() {
 }
 
 // ── Last.fm connect ──
+const lastfmStatus     = document.getElementById('lastfm-status');
+
 document.getElementById('btn-lastfm').addEventListener('click', async () => {
     if (lastfmStatus.textContent === 'Connected') return;
 

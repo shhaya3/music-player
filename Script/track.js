@@ -3,6 +3,9 @@ let currentIndex = 0;
 title = document.querySelector('.view-title');
 songNo = document.querySelector('.view-meta');
 const artistImg = document.querySelector('.view-cover');
+const audio = document.getElementById('audio-player');
+let PLAYING_TRACKS = [];
+
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -12,8 +15,6 @@ function escapeHtml(str) {
 
 
 async function getArtistImg(artistName) {
-
-  
   try {
   const res = await fetch(`http://localhost:5000/api/spotify/artist-image/${encodeURIComponent(artistName)}`);
   const data = await res.json();
@@ -68,11 +69,47 @@ async function loadLibrary() {
   try {
     const res = await fetch('http://localhost:5000/api/songs');
     TRACKS = await res.json();
+    if (PLAYING_TRACKS.length === 0 && TRACKS.length > 0) {
+      PLAYING_TRACKS = [...TRACKS];
+      queue    = PLAYING_TRACKS.map((_, i) => i);
+      queuePos = 0;
+      history  = [];
+    }
     renderTrackList();
-    if (TRACKS.length > 0) loadTrack(0);
   } catch(err) {
     console.log('cannot reach backend', err);
   }
+}
+
+
+function fisherYates(array){
+    const arr = [...array]; // never mutate original
+    for(let i = arr.length - 1; i>0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function buildQueue(tracks, startIndex) {
+  PLAYING_TRACKS = [...tracks];
+
+  if (isShuffled) {
+    // put startIndex first, shuffle the rest
+    const rest = PLAYING_TRACKS
+      .map((_, i) => i)
+      .filter(i => i !== startIndex);
+    queue    = [startIndex, ...fisherYates(rest)];
+  } else {
+    // natural order starting from startIndex
+    const before = PLAYING_TRACKS.map((_, i) => i).filter(i => i < startIndex);
+    const from   = PLAYING_TRACKS.map((_, i) => i).filter(i => i >= startIndex);
+    queue    = [...from, ...before];
+  }
+
+  queuePos = 0;
+  history  = [];
+  playFromQueue();
 }
 
 function renderTrackList() {
@@ -91,9 +128,13 @@ function renderTrackList() {
         </button>
       </td>
     `;
-    tr.addEventListener('click', () => loadTrack(i));
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('.track-menu-btn')) return;
+      buildQueue(TRACKS, i);  // ← builds queue from this view's tracks
+    });
     tbody.appendChild(tr);
   });
+
   document.querySelectorAll('.track-menu-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -136,6 +177,39 @@ async function addToFavourites(songId) {
     console.log('could not add favourite', err);
   }
 }
+
+async function loadFavourites() {
+  if (!localStorage.getItem('token')) {
+    title.textContent  = 'Liked Songs';
+    songNo.textContent = 'Please log in to see favourites';
+    // artistImg.src      = "Assest/CoverImage/liked.png";
+    TRACKS = [];
+    renderTrackList();
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost:5000/api/favourites', {
+      headers: authHeaders()
+    });
+
+    if (!res.ok) {
+      console.log('favourites fetch failed:', res.status);
+      return;
+    }
+
+    TRACKS = await res.json();
+    title.textContent  = 'Liked Songs';
+    songNo.textContent = `${TRACKS.length} songs`;
+    artistImg.src      = 'Assest/CoverImage/liked.png';
+
+    renderTrackList();
+  } catch(err) {
+    console.log('could not load favourite songs', err);
+  }
+}
+
+
 
 async function showPlaylistPicker(songId) {
   if (!localStorage.getItem('token')) {
@@ -189,4 +263,31 @@ async function showPlaylistPicker(songId) {
       document.removeEventListener('click', closePicker);
     });
   }, 0);
+}
+
+async function loadPlaylistSongs(playlistId, playlistName) {
+  // switch to songs view
+  document.querySelectorAll('.view').forEach(v => v.hidden = true);
+  document.getElementById('view-songs').hidden = false;
+
+  if (!localStorage.getItem('token')) {
+    title.textContent  = playlistName;
+    songNo.textContent = 'Please log in';
+    TRACKS = [];
+    renderTrackList();
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/playlists/${playlistId}/songs`, {
+      headers: authHeaders()
+    });
+    TRACKS = await res.json();
+    title.textContent  = playlistName;
+    songNo.textContent = `${TRACKS.length} songs`;
+    artistImg.src      = '';
+    renderTrackList();
+  } catch(err) {
+    console.log('could not load playlist songs', err);
+  }
 }

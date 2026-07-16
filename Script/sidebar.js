@@ -9,10 +9,15 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function clearActiveNav() {
+  // clears ALL nav items including dynamically added playlist ones
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+}
+
 
 navItems.forEach(item => {
   item.addEventListener('click', () => {
-    navItems.forEach(n => n.classList.remove('active'));
+    clearActiveNav();
     item.classList.add('active');
     loadView(item.dataset.view);
   });
@@ -22,8 +27,17 @@ function loadView(viewName) {
   views.forEach(v => v.hidden = true);
   const target = document.getElementById(`view-${viewName}`);
   if (target) target.hidden = false;
-  if (viewName === 'artists') loadArtistsView();
+
+  if (viewName === 'artists')    loadArtistsView();
+  if (viewName === 'albums')     loadAlbumsView();
+  if (viewName === 'favourites') {
+    // favourites reuses the songs view
+    document.getElementById('view-songs').hidden = false;
+    loadFavourites();
+  }
+  if (viewName === 'songs')      loadLibrary();
 }
+
 
 async function loadArtistsView() {
   const res  = await fetch('http://localhost:5000/api/artists');
@@ -47,35 +61,65 @@ async function loadArtistsView() {
   });
 }
 
-const playlists = ["届かない恋", "Summertime", "Shhaya's Classical"];
+async function loadPlaylists() {
+  if (!localStorage.getItem('token')) {
+    renderPlaylists([]);
+    return;
+  }
+  try {
+    const res  = await fetch('http://localhost:5000/api/playlists', { headers: authHeaders() });
+    const data = await res.json();
+    renderPlaylists(data);
+  } catch(err) {
+    console.log('could not load playlists', err);
+  }
+}
 
-function renderPlaylists() {
+function renderPlaylists(playlists) {
   const ul = document.getElementById('playlist-list');
   ul.innerHTML = '';
-  playlists.forEach((name, i) => {
+  playlists.forEach(pl => {
     const li = document.createElement('li');
     li.className = 'nav-item';
-    li.innerHTML = `<i class='fa-solid fa-list'></i> ${name}`;
-    li.addEventListener('click', () => loadPlaylist(i));
+    li.dataset.playlistId = pl.id;
+    li.innerHTML = `<i class='fa-solid fa-list'></i> ${escapeHtml(pl.name)}`;
+    li.addEventListener('click', () => {
+      clearActiveNav();
+      navItems.forEach(n => n.classList.remove('active'));
+      li.classList.add('active');
+      loadPlaylistSongs(pl.id, pl.name);
+    });
     ul.appendChild(li);
   });
 }
 
-document.getElementById('btn-new-playlist').addEventListener('click', () => {
+document.getElementById('btn-new-playlist').addEventListener('click', async () => {
+  if (!localStorage.getItem('token')) {
+    alert('Please log in to create playlists');
+    return;
+  }
   const name = prompt('Playlist name:');
-  if (name) { playlists.push(name); renderPlaylists(); }
+  if (!name) return;
+
+  try {
+    const res = await fetch('http://localhost:5000/api/playlists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ name })
+    });
+    if (res.ok) {
+      loadPlaylists(); // refresh list from backend
+    }
+  } catch(err) {
+    console.log('could not create playlist', err);
+  }
 });
 
+// call on page load and after login
+loadPlaylists();
 renderPlaylists();
 
 
-function loadView(viewName) {
-  views.forEach(v => v.hidden = true);
-  const target = document.getElementById(`view-${viewName}`);
-  if (target) target.hidden = false;
-  if (viewName === 'artists') loadArtistsView();
-  if (viewName === 'albums')  loadAlbumsView();
-}
 
 async function loadAlbumsView() {
   const res  = await fetch('http://localhost:5000/api/albums');
@@ -100,6 +144,7 @@ async function loadAlbumsView() {
     albumTbody.appendChild(tr);
   });
 }
+
 
 async function connectLastfm() {
   const res  = await fetch('http://localhost:5000/api/lastfm/connect', {

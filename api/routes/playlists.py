@@ -45,7 +45,20 @@ def add_to_playlist(current_user, pid):
     db.session.add(entry)
     db.session.commit()
     return jsonify({'message': 'Song added'}), 201
- 
+
+@playlists_bp.route('/api/playlists/<int:pid>/songs/<int:song_id>', methods=['DELETE'])
+@token_required
+def remove_from_playlist(current_user, pid, song_id):
+    playlist = Playlist.query.get_or_404(pid)
+    if playlist.user_id != current_user.id:
+        return jsonify({'error': 'Forbidden'}), 403
+    entry = PlaylistSongs.query.filter_by(
+        playlist_id=pid, song_id=song_id
+    ).first()
+    if entry:
+        db.session.delete(entry)
+        db.session.commit()
+    return jsonify({'message': 'Removed from playlist'})
  
 @playlists_bp.route('/api/playlists/<int:pid>', methods=['DELETE'])
 @token_required

@@ -5,6 +5,8 @@ const volIcon      = document.getElementById("vol-icon");
 const trackSection = document.querySelector('.track-section');
 const app          = document.querySelector('.app');
 let activeMenu     = null;
+let currentView   = 'songs';      // track what view we're in
+let currentPlaylistId = null;     // track which playlist if in playlist view
 
 
 function setPlayIcon(isPlaying) {
