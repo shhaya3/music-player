@@ -89,16 +89,16 @@ def add_favourite(current_user, song_id):
         db.session.rollback()
     return jsonify({'message': 'Added To Favourites'})
 
-@song_bp.route('/api/favourites/<int:song_id>', methods=['DELETE'])
-@token_required
-def remove_favorites(current_user, song_id):
-    fav = Favourite.query.filter_by(
-        user_id=current_user.id, song_id=song_id
-    ).first()
-    if fav:
-        db.session.delete(fav)
-        db.session.commit()
-        return jsonify({'message': 'Removed from favourites'})
+# @song_bp.route('/api/favourites/<int:song_id>', methods=['DELETE'])
+# @token_required
+# def remove_favorites(current_user, song_id):
+#     fav = Favourite.query.filter_by(
+#         user_id=current_user.id, song_id=song_id
+#     ).first()
+#     if fav:
+#         db.session.delete(fav)
+#         db.session.commit()
+#         return jsonify({'message': 'Removed from favourites'})
 
 @songs_bp.route('/api/admin/scan')
 @token_required

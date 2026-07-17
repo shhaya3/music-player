@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="Assest/favicon.png">
+    <link rel="icon" type="image/x-icon" href="assest/favicon.png">
     <title>Music Player</title>
-    <link rel="stylesheet" href="CSS/style.css" />
+    <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -84,8 +84,8 @@
           <img class="view-cover" src="" alt="Cover" />
           <div>
             <p class="view-label">Songs</p>
-            <h1 class="view-title">Songs</h1>
-            <p class="view-meta">9 songs · 32 min</p>
+            <h1 class="view-title" id="view-title">Songs</h1>
+            <p class="view-meta" id="view-meta">9 songs · 32 min</p>
           </div>
         </div>
         <table class="track-table">
@@ -210,12 +210,7 @@
   </div>
 </div>
 
-<script src="Script/auth.js"></script>
-<script src="Script/cache.js"></script>
-<script src="Script/track.js"></script>
-<script src="Script/ui.js"></script>
-<script src="Script/sidebar.js"></script>
-<script src="Script/player.js"></script>
+<script type="module" src="js/main.js"></script>
 
 </body>
 </html>
