@@ -1,15 +1,13 @@
-// ─────────────────────────────────────────────────────────────────────────────
 // sidebar.js
 // Sidebar navigation, artists/albums lists, playlist management.
 // Depends on: api.js, track.js, ui.js
-// ─────────────────────────────────────────────────────────────────────────────
 
 import { apiFetchArtists, apiFetchAlbums, apiFetchPlaylists, apiCreatePlaylist, apiDeletePlaylist, escapeHtml } from './api.js';
 import { loadLibrary, loadArtistSongs, loadAlbumSongs, loadFavourites, loadPlaylistSongs } from './track.js';
 import { setMenuContext } from './ui.js';
 import { getCachedArtistImage } from './cache.js';
 
-// ── DOM elements ──────────────────────────────────────────────────────────────
+// DOM elements 
 
 const navItems   = document.querySelectorAll('.nav-item');
 const views      = document.querySelectorAll('.view');
@@ -17,13 +15,13 @@ const artistBody = document.getElementById('artist-list-body');
 const albumBody  = document.getElementById('album-list-body');
 
 
-// ── Clear active nav ──────────────────────────────────────────────────────────
+// Clear active nav 
 
 function clearActiveNav() {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 }
 
-// ── Switch views ──────────────────────────────────────────────────────────────
+//  Switch views 
 
 function showView(viewName) {
   views.forEach(v => v.hidden = true);
@@ -36,7 +34,7 @@ function showView(viewName) {
   }
 }
 
-// ── Library nav items ─────────────────────────────────────────────────────────
+// Library nav items 
 
 navItems.forEach(item => {
   item.addEventListener('click', () => {
@@ -53,7 +51,7 @@ navItems.forEach(item => {
   });
 });
 
-// ── Artists view ──────────────────────────────────────────────────────────────
+// Artists view 
 
 async function loadArtistsView() {
   const data = await apiFetchArtists();
@@ -95,7 +93,7 @@ async function loadArtistsView() {
   document.querySelectorAll('.artist-thumb').forEach(img => observer.observe(img));
 }
 
-// ── Albums view ───────────────────────────────────────────────────────────────
+// Albums view 
 
 async function loadAlbumsView() {
   const data = await apiFetchAlbums();
@@ -120,7 +118,7 @@ async function loadAlbumsView() {
   });
 }
 
-// ── Playlists ─────────────────────────────────────────────────────────────────
+// Playlists 
 
 export async function loadPlaylists() {
   const data = await apiFetchPlaylists();
@@ -137,13 +135,10 @@ function renderPlaylists(playlists) {
     li.innerHTML = `
       <i class="fa-solid fa-list"></i>
       <span>${escapeHtml(pl.name)}</span>
-      <button class="delete-playlist-btn" title="Delete playlist">
-        <i class="fa-solid fa-trash"></i>
-      </button>
     `;
 
+    // left click — open playlist
     li.addEventListener('click', e => {
-      if (e.target.closest('.delete-playlist-btn')) return;
       clearActiveNav();
       li.classList.add('active');
       showView('playlist');
@@ -151,15 +146,47 @@ function renderPlaylists(playlists) {
       loadPlaylistSongs(pl.id, pl.name);
     });
 
-    li.querySelector('.delete-playlist-btn').addEventListener('click', async e => {
-      e.stopPropagation();
-      if (!confirm(`Delete "${pl.name}"?`)) return;
-      const ok = await apiDeletePlaylist(pl.id);
-      if (ok) loadPlaylists();
+    // right click — show context menu
+    li.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      openPlaylistMenu(e, pl);
     });
 
     ul.appendChild(li);
   });
+}
+
+function openPlaylistMenu(event, playlist) {
+  document.querySelectorAll('.playlist-context-menu').forEach(m => m.remove());
+
+  const menu = document.createElement('div');
+  menu.className = 'context-menu playlist-context-menu';
+  menu.style.top  = `${event.clientY}px`;
+  menu.style.left = `${event.clientX}px`;
+
+  menu.innerHTML = `
+    <button class="menu-item menu-item-danger" id="delete-pl-btn">
+      <i class="fa-solid fa-trash"></i> Delete Playlist
+    </button>
+  `;
+
+  document.body.appendChild(menu);
+
+  menu.querySelector('#delete-pl-btn').addEventListener('click', async () => {
+    menu.remove();
+    if (!confirm(`Delete "${playlist.name}"?`)) return;
+    const ok = await apiDeletePlaylist(playlist.id);
+    if (ok) loadPlaylists();
+  });
+
+  // close on outside click
+  function closeMenu(e) {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('click', closeMenu, true);
+    }
+  }
+  setTimeout(() => document.addEventListener('click', closeMenu, true), 0);
 }
 
 document.getElementById('btn-new-playlist').addEventListener('click', async () => {
@@ -169,12 +196,12 @@ document.getElementById('btn-new-playlist').addEventListener('click', async () =
   loadPlaylists();
 });
 
-// ── React to auth events ──────────────────────────────────────────────────────
+//  React to auth events 
 
 document.addEventListener('userLoggedIn',  () => loadPlaylists());
 document.addEventListener('userLoggedOut', () => renderPlaylists([]));
 document.addEventListener('libraryScanned', () => loadLibrary());
 
-// ── Initial load ──────────────────────────────────────────────────────────────
+// Initial load 
 
 loadPlaylists();

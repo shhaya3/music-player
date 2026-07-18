@@ -181,9 +181,14 @@ body {
 
 .sidebar-heading-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
   margin-bottom: 0.75rem;
+}
+
+.sidebar-heading-row .sidebar-heading {
+  margin-bottom: 0;  /* remove bottom margin when in a row */
 }
 
 .sidebar-nav {
@@ -222,11 +227,32 @@ body {
   color: #64748b;
   font-size: 1rem;
   cursor: pointer;
-  transition: color 0.2s;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+#playlist-list .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 8px 14px;
+}
+
+#playlist-list .nav-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #btn-new-playlist:hover {
   color: #a78bfa;
+  background: rgba(124, 58, 237, 0.15);
 }
 
 /* ── Profile dropdown buttons ── */
@@ -602,4 +628,25 @@ input[type='range']::-webkit-slider-thumb {
 .menu-item:hover {
   background: rgba(167, 139, 250, 0.15);
   color: #a78bfa;
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e1e2e;
+  color: #f1f5f9;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  font-size: 0.85rem;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.toast-hide {
+  opacity: 0;
 }

@@ -134,3 +134,16 @@ export function openTrackMenu(event, songId, trackIndex) {
   }
   document.addEventListener('click', handleOutsideClick, true);
 }
+
+export function showToast(message) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+
+  const toast = document.createElement('div');
+  toast.className   = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // fade out after 2.5 seconds
+  setTimeout(() => toast.classList.add('toast-hide'), 2000);
+  setTimeout(() => toast.remove(), 2500);
+}

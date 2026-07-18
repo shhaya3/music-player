@@ -11,8 +11,8 @@ import {
   apiFetchPlaylists, escapeHtml, formatTime, isLoggedIn
 } from './api.js';
 import { getCachedArtistImage } from './cache.js';
-import { buildQueue, insertIntoQueue, PLAYING_TRACKS } from './queue.js';
-import { openTrackMenu } from './ui.js';
+import { buildQueue, insertIntoQueue, PLAYING_TRACKS, queue, queuePos } from './queue.js';
+import { openTrackMenu, showToast } from './ui.js';
 
 // State 
 
@@ -33,12 +33,18 @@ const trackBody   = document.getElementById('track-list-body');
 export function renderTrackList() {
   trackBody.innerHTML = '';
 
+  const currentPlayingTrack = PLAYING_TRACKS[queue[queuePos]];
   TRACKS.forEach((track, i) => {
     const tr      = document.createElement('tr');
-    const isPlaying = PLAYING_TRACKS[i]?.id === track.id;
+    const isPlaying = currentPlayingTrack && currentPlayingTrack.id === track.id;
 
+
+    if (isPlaying) {
+      tr.classList.add('playing');
+    }
+    
     tr.innerHTML = `
-      <td class="track-num">${isPlaying ? '<i class="fa-solid fa-volume-high"></i>' : i + 1}</td>
+      <td class="track-num">${i + 1}</td>
       <td>${escapeHtml(track.title)}</td>
       <td>
         <span class="artist-link" data-artist="${escapeHtml(track.artist)}">
@@ -80,12 +86,6 @@ export function renderTrackList() {
 export function highlightRow(trackIndex) {
   document.querySelectorAll('#track-list-body tr').forEach((tr, i) => {
     tr.classList.toggle('playing', i === trackIndex);
-    const numCell = tr.querySelector('.track-num');
-    if (numCell) {
-      numCell.innerHTML = i === trackIndex
-        ? '<i class="fa-solid fa-volume-high" style="font-size:11px"></i>'
-        : String(i + 1);
-    }
   });
 }
 
@@ -98,7 +98,7 @@ export async function loadLibrary() {
     TRACKS = await apiFetchSongs();
     viewTitle.textContent = 'Songs';
     viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = '';
+    viewCover.src         = 'assest/songs.png';
     renderTrackList();
   } catch (err) {
     console.error('Could not load library:', err);
@@ -114,7 +114,6 @@ export async function loadArtistSongs(artist) {
     viewMeta.textContent  = `${TRACKS.length} songs`;
     const img = await getCachedArtistImage(artist);
     viewCover.src         = img || '';
-    viewCover.style.borderRadius = img ? '50%' : '8px';
     renderTrackList();
   } catch (err) {
     console.error('Could not load artist songs:', err);
@@ -150,7 +149,7 @@ export async function loadFavourites() {
     TRACKS = await apiFetchFavourites();
     viewTitle.textContent = 'Liked Songs';
     viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = '';
+    viewCover.src         = 'assest/CoverImage/liked.png';
     renderTrackList();
   } catch (err) {
     console.error('Could not load favourites:', err);
@@ -164,8 +163,9 @@ export async function loadPlaylistSongs(playlistId, playlistName) {
     TRACKS = await apiFetchPlaylistSongs(playlistId);
     viewTitle.textContent = playlistName;
     viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = '';
+    viewCover.src         = 'assest/songs.png';
     renderTrackList();
+    highlightRow();
   } catch (err) {
     console.error('Could not load playlist songs:', err);
   }
@@ -193,8 +193,25 @@ export async function removeFromPlaylist(songId) {
   renderTrackList();
 }
 
-export function addSongToQueue(trackIndex) {
-  insertIntoQueue(trackIndex);
+export function addSongToQueue(displayIndex) {
+  // find this track's position in PLAYING_TRACKS
+  const song  = TRACKS[displayIndex];
+  if (!song) return;
+
+  // find its index in PLAYING_TRACKS
+  const ptIndex = PLAYING_TRACKS.findIndex(t => t.id === song.id);
+
+  if (ptIndex !== -1) {
+    // song already in playing context — insert that index
+    insertIntoQueue(ptIndex);
+  } else {
+    // song not in current context — add it to PLAYING_TRACKS first
+    PLAYING_TRACKS.push(song);
+    insertIntoQueue(PLAYING_TRACKS.length - 1);
+  }
+
+  // visual feedback
+  showToast(`Added "${song.title}" to queue`);
 }
 
 export async function showPlaylistPicker(songId, rect) {
