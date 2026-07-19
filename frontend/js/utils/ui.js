@@ -4,11 +4,11 @@
 // Depends on: api.js, track.js
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { formatTime } from './api.js';
+import { formatTime } from '../api/api.js';
 import {
   addToFavourites, removeFromFavourites, removeFromPlaylist,
   addSongToQueue, showPlaylistPicker, TRACKS
-} from './track.js';
+} from '../components/track.js';
 //import { audio } from './track.js';
 
 // ── DOM elements ──────────────────────────────────────────────────────────────

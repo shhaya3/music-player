@@ -5,14 +5,14 @@
 // Depends on: api.js, queue.js, track.js, ui.js
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { apiScrobble, apiUpdateNowPlaying, isLoggedIn, formatTime } from './api.js';
+import { apiScrobble, apiUpdateNowPlaying, isLoggedIn, formatTime } from '../api/api.js';
 import {
   queue, queuePos, history, isShuffled, repeatMode,
   buildQueue, queueNext, queuePrev, queueEnded,
   toggleShuffle, cycleRepeat, PLAYING_TRACKS
-} from './queue.js';
-import { audio, highlightRow, setPlayTrackCallback, TRACKS } from './track.js';
-import { setPlayIcon, updateVolIcon, applyBackgroundFromCover } from './ui.js';
+} from '../states/queue.js';
+import { audio, highlightRow, setPlayTrackCallback, TRACKS } from '../components/track.js';
+import { setPlayIcon, updateVolIcon, applyBackgroundFromCover } from '../utils/ui.js';
 
 // ── DOM elements ──────────────────────────────────────────────────────────────
 

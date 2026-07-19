@@ -6,7 +6,7 @@ import {
   apiLogin, apiRegister, apiFetchMe,
   apiGetLastfmConnectUrl, apiScanLibrary,
   isLoggedIn, getToken
-} from './api.js';
+} from '../api/api.js';
 
 // DOM elements 
 

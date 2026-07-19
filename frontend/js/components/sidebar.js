@@ -2,10 +2,10 @@
 // Sidebar navigation, artists/albums lists, playlist management.
 // Depends on: api.js, track.js, ui.js
 
-import { apiFetchArtists, apiFetchAlbums, apiFetchPlaylists, apiCreatePlaylist, apiDeletePlaylist, escapeHtml } from './api.js';
-import { loadLibrary, loadArtistSongs, loadAlbumSongs, loadFavourites, loadPlaylistSongs } from './track.js';
-import { setMenuContext } from './ui.js';
-import { getCachedArtistImage } from './cache.js';
+import { apiFetchArtists, apiFetchAlbums, apiFetchPlaylists, apiCreatePlaylist, apiDeletePlaylist, escapeHtml } from '../api/api.js';
+import { loadLibrary, loadArtistSongs, loadAlbumSongs, loadFavourites, loadPlaylistSongs } from '../components/track.js';
+import { setMenuContext } from '../utils/ui.js';
+import { getCachedArtistImage } from '../states/cache.js';
 
 // DOM elements 
 

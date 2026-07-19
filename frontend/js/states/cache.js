@@ -2,7 +2,7 @@
 // Caches Spotify artist images in localStorage for 7 days.
 // Depends on: api.js
 
-import { apiFetchArtistImage } from './api.js';
+import { apiFetchArtistImage } from '../api/api.js';
 
 const CACHE_KEY      = 'artistImageCache';
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in ms

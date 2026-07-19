@@ -9,10 +9,10 @@ import {
   apiAddFavourite, apiRemoveFavourite,
   apiAddSongToPlaylist, apiRemoveSongFromPlaylist,
   apiFetchPlaylists, escapeHtml, formatTime, isLoggedIn
-} from './api.js';
-import { getCachedArtistImage } from './cache.js';
-import { buildQueue, insertIntoQueue, PLAYING_TRACKS, queue, queuePos } from './queue.js';
-import { openTrackMenu, showToast } from './ui.js';
+} from '../api/api.js';
+import { getCachedArtistImage } from '../states/cache.js';
+import { buildQueue, insertIntoQueue, PLAYING_TRACKS, queue, queuePos } from '../states/queue.js';
+import { openTrackMenu, showToast } from '../utils/ui.js';
 
 // State 
 

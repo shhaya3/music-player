@@ -3,11 +3,11 @@
 // Imports all modules. Order matters — dependencies first.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import './api.js';
-import './cache.js';
-import './queue.js';
-import './auth.js';
-import './track.js';
-import './ui.js';
-import './sidebar.js';
-import './player.js';
+import './api/api.js';
+import './states/cache.js';
+import './states/queue.js';
+import './utils/auth.js';
+import './components/track.js';
+import './utils/ui.js';
+import './components/sidebar.js';
+import './components/player.js';
