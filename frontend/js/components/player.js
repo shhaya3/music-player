@@ -1,9 +1,7 @@
-// ─────────────────────────────────────────────────────────────────────────────
 // player.js
 // Controls the HTML5 audio element. Play/pause, next/prev, volume,
 // shuffle, repeat, scrobble. Uses queue.js for playback order.
 // Depends on: api.js, queue.js, track.js, ui.js
-// ─────────────────────────────────────────────────────────────────────────────
 
 import { apiScrobble, apiUpdateNowPlaying, isLoggedIn, formatTime } from '../api/api.js';
 import {
@@ -14,7 +12,7 @@ import {
 import { audio, highlightRow, setPlayTrackCallback, TRACKS } from '../components/track.js';
 import { setPlayIcon, updateVolIcon, applyBackgroundFromCover } from '../utils/ui.js';
 
-// ── DOM elements ──────────────────────────────────────────────────────────────
+// DOM elements
 
 const npCover    = document.getElementById('np-cover');
 const npTitle    = document.getElementById('np-title');
@@ -28,12 +26,12 @@ const repeatBadge = document.getElementById('repeat-badge');
 const volSlider  = document.getElementById('volume');
 const muteBtn    = document.getElementById('mute-btn');
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// State
 
 let isMuted      = false;
 let hasScrobbled = false;
 
-// ── Play a track by its index in PLAYING_TRACKS ───────────────────────────────
+// Play a track by its index in PLAYING_TRACKS
 
 function playTrackAtIndex(trackIndex) {
   const track = PLAYING_TRACKS[trackIndex];
@@ -63,14 +61,14 @@ function playTrackAtIndex(trackIndex) {
 // register callback so track.js can trigger playback when user clicks a row
 setPlayTrackCallback(playTrackAtIndex);
 
-// ── Play / pause ──────────────────────────────────────────────────────────────
+// Play / pause
 
 playBtn.addEventListener('click', () => {
   if (audio.paused) { audio.play(); setPlayIcon(true); }
   else              { audio.pause(); setPlayIcon(false); }
 });
 
-// ── Next / prev ───────────────────────────────────────────────────────────────
+// Next / prev
 
 nextBtn.addEventListener('click', () => {
   queueNext(playTrackAtIndex);
@@ -80,13 +78,16 @@ prevBtn.addEventListener('click', () => {
   queuePrev(audio.currentTime, playTrackAtIndex, () => { audio.currentTime = 0; });
 });
 
-// ── Song ended ────────────────────────────────────────────────────────────────
+// Song ended 
 
 audio.addEventListener('ended', () => {
-  queueEnded(playTrackAtIndex, () => setPlayIcon(false));
+  queueEnded(
+    (trackIndex) => playTrackAtIndex(trackIndex),
+    () => setPlayIcon(false)
+  );
 });
 
-// ── Scrobble at 50% or 4 minutes ─────────────────────────────────────────────
+// Scrobble at 50% or 4 minutes 
 
 audio.addEventListener('timeupdate', () => {
   if (!audio.duration || hasScrobbled) return;
@@ -98,14 +99,14 @@ audio.addEventListener('timeupdate', () => {
   }
 });
 
-// ── Shuffle ───────────────────────────────────────────────────────────────────
+//Shuffle
 
 shuffleBtn.addEventListener('click', () => {
   const shuffled = toggleShuffle();
   shuffleBtn.style.color = shuffled ? '#a78bfa' : '';
 });
 
-// ── Repeat ────────────────────────────────────────────────────────────────────
+//Repeat
 
 repeatBtn.addEventListener('click', () => {
   const mode = cycleRepeat();
@@ -114,7 +115,7 @@ repeatBtn.addEventListener('click', () => {
   repeatBadge.style.display    = mode === 'one'  ? 'flex'    : 'none';
 });
 
-// ── Volume ────────────────────────────────────────────────────────────────────
+//Volume
 
 const savedVol = parseFloat(localStorage.getItem('volume') || '0.8');
 audio.volume   = savedVol;
@@ -147,33 +148,33 @@ muteBtn.addEventListener('click', () => {
   }
 });
 
-// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+//Keyboard shortcuts
 
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return; // don't fire when typing
+// document.addEventListener('keydown', e => {
+//   if (e.target.tagName === 'INPUT') return; // don't fire when typing
 
-  switch (e.key) {
-    case ' ':
-      e.preventDefault();
-      if (audio.paused) { audio.play(); setPlayIcon(true); }
-      else              { audio.pause(); setPlayIcon(false); }
-      break;
-    case 'ArrowRight': queueNext(playTrackAtIndex); break;
-    case 'ArrowLeft':
-      queuePrev(audio.currentTime, playTrackAtIndex, () => { audio.currentTime = 0; });
-      break;
-    case 'ArrowUp':
-      audio.volume = Math.min(1, audio.volume + 0.05);
-      volSlider.value = audio.volume;
-      updateVolIcon(audio.volume, isMuted);
-      break;
-    case 'ArrowDown':
-      audio.volume = Math.max(0, audio.volume - 0.05);
-      volSlider.value = audio.volume;
-      updateVolIcon(audio.volume, isMuted);
-      break;
-    case 'm':
-      muteBtn.click();
-      break;
-  }
-});
+//   switch (e.key) {
+//     case ' ':
+//       e.preventDefault();
+//       if (audio.paused) { audio.play(); setPlayIcon(true); }
+//       else              { audio.pause(); setPlayIcon(false); }
+//       break;
+//     case 'ArrowRight': queueNext(playTrackAtIndex); break;
+//     case 'ArrowLeft':
+//       queuePrev(audio.currentTime, playTrackAtIndex, () => { audio.currentTime = 0; });
+//       break;
+//     case 'ArrowUp':
+//       audio.volume = Math.min(1, audio.volume + 0.05);
+//       volSlider.value = audio.volume;
+//       updateVolIcon(audio.volume, isMuted);
+//       break;
+//     case 'ArrowDown':
+//       audio.volume = Math.max(0, audio.volume - 0.05);
+//       volSlider.value = audio.volume;
+//       updateVolIcon(audio.volume, isMuted);
+//       break;
+//     case 'm':
+//       muteBtn.click();
+//       break;
+//   }
+// });

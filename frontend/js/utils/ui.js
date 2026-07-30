@@ -1,8 +1,6 @@
-// ─────────────────────────────────────────────────────────────────────────────
 // ui.js
 // DOM helpers: play icon, background blur, context menu.
 // Depends on: api.js, track.js
-// ─────────────────────────────────────────────────────────────────────────────
 
 import { formatTime } from '../api/api.js';
 import {
@@ -11,7 +9,7 @@ import {
 } from '../components/track.js';
 //import { audio } from './track.js';
 
-// ── DOM elements ──────────────────────────────────────────────────────────────
+// DOM elements 
 
 const playIcon    = document.getElementById('play-icon');
 const songDuration = document.getElementById('song-duration');
@@ -21,13 +19,13 @@ const progressBar  = document.getElementById('progress-bar');
 const appEl        = document.querySelector('.app');
 const audio        = document.getElementById('audio-player');
 
-// ── Play icon ─────────────────────────────────────────────────────────────────
+// Play icon 
 
 export function setPlayIcon(isPlaying) {
   playIcon.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
 }
 
-// ── Progress bar ──────────────────────────────────────────────────────────────
+// Progress bar 
 
 audio.addEventListener('timeupdate', () => {
   if (!audio.duration) return;
@@ -48,7 +46,7 @@ progressBar.addEventListener('input', () => {
   audio.currentTime = (progressBar.value / 100) * audio.duration;
 });
 
-// ── Volume icon helper ────────────────────────────────────────────────────────
+// Volume icon helper 
 
 export function updateVolIcon(volume, muted) {
   if (muted || volume === 0) volIcon.className = 'fa-solid fa-volume-xmark';
@@ -56,13 +54,13 @@ export function updateVolIcon(volume, muted) {
   else                        volIcon.className = 'fa-solid fa-volume-high';
 }
 
-// ── Background from cover ─────────────────────────────────────────────────────
+// Background from cover 
 
 export function applyBackgroundFromCover(imageUrl) {
   if (imageUrl) appEl.style.backgroundImage = `url('${imageUrl}')`;
 }
 
-// ── Context menu ──────────────────────────────────────────────────────────────
+// Context menu 
 
 let activeMenu    = null;
 let currentCtxView = 'songs';

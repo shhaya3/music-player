@@ -62,7 +62,10 @@ export function queuePrev(currentTime, onPlay, onRestart) {
 }
 
 export function queueEnded(onPlay, onStop) {
-  if (repeatMode === 'one') { onRestart(); return; }
+  if (repeatMode === 'one') {
+    onPlay(queue[queuePos]);
+    return;
+  }
   history.push(queuePos);
   if (queuePos < queue.length - 1) {
     queuePos++;
@@ -80,6 +83,10 @@ export function queueEnded(onPlay, onStop) {
 // Inserts a track right after the current position.
 
 export function insertIntoQueue(trackIndex) {
+  if (!queue.length) {
+    console.warn('Queue is empty — load a track first');
+    return;
+  }
   queue.splice(queuePos + 1, 0, trackIndex);
 }
 

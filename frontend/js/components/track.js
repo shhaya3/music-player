@@ -5,12 +5,11 @@
 
 import {
   apiFetchSongs, apiFetchArtistSongs, apiFetchAlbumSongs,
-  apiFetchFavourites, apiFetchPlaylistSongs,
-  apiAddFavourite, apiRemoveFavourite,
+  apiFetchFavourites, apiFetchPlaylistSongs, apiFetchArtistImage,
+  apiAddFavourite, apiRemoveFavourite, apiSearchSongs,
   apiAddSongToPlaylist, apiRemoveSongFromPlaylist,
   apiFetchPlaylists, escapeHtml, formatTime, isLoggedIn
 } from '../api/api.js';
-import { getCachedArtistImage } from '../states/cache.js';
 import { buildQueue, insertIntoQueue, PLAYING_TRACKS, queue, queuePos } from '../states/queue.js';
 import { openTrackMenu, showToast } from '../utils/ui.js';
 
@@ -27,6 +26,57 @@ const viewTitle   = document.getElementById('view-title');
 const viewMeta    = document.getElementById('view-meta');
 const viewCover   = document.querySelector('.view-cover');
 const trackBody   = document.getElementById('track-list-body');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+
+
+//Search
+
+function clearSearch() {
+  if (searchInput) {
+    searchInput.value  = '';
+    searchClear.hidden = true;
+    isSearching        = false;
+  }
+}
+
+let searchTimer   = null;
+let isSearching   = false;
+
+searchInput.addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+
+  searchClear.hidden = !q;
+
+  if (!q) {
+    isSearching = false;
+    loadLibrary();
+    return;
+  }
+
+  // debounce — wait 300ms after user stops typing
+  searchTimer = setTimeout(async () => {
+    isSearching = true;
+    try {
+      const results = await apiSearchSongs(q);
+      TRACKS = results;
+      viewTitle.textContent = `Results for "${q}"`;
+      viewMeta.textContent  = `${results.length} songs`;
+      viewCover.src         = '';
+      renderTrackList();
+    } catch (err) {
+      console.error('Search failed:', err);
+    }
+  }, 300);
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value  = '';
+  searchClear.hidden = true;
+  isSearching        = false;
+  loadLibrary();
+});
 
 // Render track list 
 
@@ -92,6 +142,7 @@ export function highlightRow(trackIndex) {
 // View loaders 
 
 export async function loadLibrary() {
+  clearSearch();
   currentView  = 'songs';
   currentCtxId = null;
   try {
@@ -106,13 +157,14 @@ export async function loadLibrary() {
 }
 
 export async function loadArtistSongs(artist) {
+  clearSearch();
   currentView  = 'artist';
   currentCtxId = null;
   try {
     TRACKS = await apiFetchArtistSongs(artist);
     viewTitle.textContent = artist;
     viewMeta.textContent  = `${TRACKS.length} songs`;
-    const img = await getCachedArtistImage(artist);
+    const img = await apiFetchArtistImage(artist);
     viewCover.src         = img || '';
     renderTrackList();
   } catch (err) {
@@ -121,6 +173,7 @@ export async function loadArtistSongs(artist) {
 }
 
 export async function loadAlbumSongs(album) {
+  clearSearch();
   currentView  = 'album';
   currentCtxId = null;
   try {
@@ -136,6 +189,7 @@ export async function loadAlbumSongs(album) {
 }
 
 export async function loadFavourites() {
+  clearSearch();
   currentView  = 'favourites';
   currentCtxId = null;
   if (!isLoggedIn()) {
@@ -157,6 +211,7 @@ export async function loadFavourites() {
 }
 
 export async function loadPlaylistSongs(playlistId, playlistName) {
+  clearSearch();
   currentView  = 'playlist';
   currentCtxId = playlistId;
   try {

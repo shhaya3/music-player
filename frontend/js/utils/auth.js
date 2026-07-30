@@ -5,7 +5,7 @@
 import {
   apiLogin, apiRegister, apiFetchMe,
   apiGetLastfmConnectUrl, apiScanLibrary,
-  isLoggedIn, getToken
+  isLoggedIn, getToken, apiFetch
 } from '../api/api.js';
 
 // DOM elements 
@@ -166,6 +166,15 @@ if (params.get('lastfm') === 'connected') {
   checkLastfmStatus();
   window.history.replaceState({}, '', window.location.pathname);
 }
+
+document.addEventListener('authExpired', () => {
+  updateProfileUI();
+  document.dispatchEvent(new CustomEvent('userLoggedOut'));
+  // show modal so user knows they need to log in
+  authModal.hidden = false;
+  document.getElementById('login-error').textContent =
+    'Your session expired — please log in again';
+});
 
 // Run on page load 
 

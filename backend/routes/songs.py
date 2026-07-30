@@ -104,14 +104,20 @@ def add_favourite(current_user, song_id):
 @token_required
 def scan(current_user):
     from utils.scanner import scan_music_folder, cleanup_missing_songs
-
+    import requests as req
     removed = cleanup_missing_songs(current_app.config['MUSIC_DIR'])
+    
 
     added, errors = scan_music_folder(
         current_app.config['MUSIC_DIR'],
         current_app.config['COVERS_DIR'],
         current_app.config['BASE_URL']
     )
+
+    try:
+        req.post(f"{current_app.config['BASE_URL']}/api/spotify/cache/cleanup")
+    except Exception:
+        pass
 
     return jsonify({
         'added':added,

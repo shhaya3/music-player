@@ -2,10 +2,9 @@
 // Sidebar navigation, artists/albums lists, playlist management.
 // Depends on: api.js, track.js, ui.js
 
-import { apiFetchArtists, apiFetchAlbums, apiFetchPlaylists, apiCreatePlaylist, apiDeletePlaylist, escapeHtml } from '../api/api.js';
+import { apiFetchArtistImage, apiFetchArtists, apiFetchAlbums, apiFetchPlaylists, apiCreatePlaylist, apiDeletePlaylist, escapeHtml } from '../api/api.js';
 import { loadLibrary, loadArtistSongs, loadAlbumSongs, loadFavourites, loadPlaylistSongs } from '../components/track.js';
 import { setMenuContext } from '../utils/ui.js';
-import { getCachedArtistImage } from '../states/cache.js';
 
 // DOM elements 
 
@@ -61,8 +60,12 @@ async function loadArtistsView() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="artist-thumb-cell">
-        <img class="artist-thumb" src="" data-artist="${escapeHtml(a.artist)}"
-          style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-right:10px;vertical-align:middle;" />
+        <img
+          class="artist-thumb"
+          src="assets/covers/album-placeholder.png"
+          data-artist="${escapeHtml(a.artist)}"
+          style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-right:10px;vertical-align:middle;"
+        />
         ${escapeHtml(a.artist)}
       </td>
       <td class="track-dur">${a.count} songs</td>
@@ -80,15 +83,15 @@ async function loadArtistsView() {
 
   // lazy-load artist images
   const observer = new IntersectionObserver(entries => {
-    entries.forEach(async entry => {
-      if (!entry.isIntersecting) return;
-      const img    = entry.target;
-      const artist = img.dataset.artist;
-      observer.unobserve(img);
-      const url = await getCachedArtistImage(artist);
-      if (url) img.src = url;
-    });
+  entries.forEach(async entry => {
+    if (!entry.isIntersecting) return;
+    const img    = entry.target;
+    const artist = img.dataset.artist;
+    observer.unobserve(img);
+    const url = await apiFetchArtistImage(artist);  // ← changed
+    if (url) img.src = url;
   });
+});
 
   document.querySelectorAll('.artist-thumb').forEach(img => observer.observe(img));
 }

@@ -42,7 +42,6 @@ def login():
     token = jwt.encode({
         'user_id': user.id,
         'username': user.username,
-        'exp': datetime.utcnow() + timedelta(hours=24)
     }, current_app.config['SECRET_KEY'], algorithm='HS256')
 
     return jsonify({'token': token, 'username': user.username})
@@ -58,7 +57,11 @@ def token_required(f):
             return jsonify({'error': 'Login required'}), 401
 
         try:
-            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            data = jwt.decode(
+                token, 
+                current_app.config['SECRET_KEY'],
+                algorithms=['HS256'], 
+                options={'verify_exp': False})
             current_user = User.query.get(data['user_id'])
             if not current_user:
                 return jsonify({'error': 'User not found'}), 401

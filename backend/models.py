@@ -74,3 +74,15 @@ class Favourite(db.Model):
 
 # This prevents the same song being favourited twice by the same user
     __table_args__ = (db.UniqueConstraint('user_id', 'song_id'),)
+
+
+class ArtistImageCache(db.Model):
+    __tablename__ = 'artist_image_cache'
+
+    id         = db.Column(db.Integer,     primary_key=True)
+    artist     = db.Column(db.String(200), unique=True, nullable=False)
+    image_url  = db.Column(db.String(500), nullable=True)
+    fetched_at = db.Column(db.DateTime,    default=datetime.utcnow)
+
+    def is_expired(self, days=14):
+        return (datetime.utcnow() - self.fetched_at).days >= days

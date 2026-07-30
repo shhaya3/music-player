@@ -36,10 +36,6 @@ export async function apiFetchSongs() {
   return res.json();
 }
 
-export async function apiSearchSongs(query) {
-  const res = await fetch(`${API_BASE}/api/songs/search?q=${encodeURIComponent(query)}`);
-  return res.json();
-}
 
 export async function apiFetchArtists() {
   const res = await fetch(`${API_BASE}/api/artists`);
@@ -153,6 +149,17 @@ export async function apiFetchMe() {
   return res.ok ? res.json() : null;
 }
 
+export async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    // token is invalid — clear it and update UI
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    document.dispatchEvent(new CustomEvent('authExpired'));
+  }
+  return res;
+}
+
 //Last.fm 
 
 export async function apiGetLastfmConnectUrl() {
@@ -194,4 +201,13 @@ export async function apiFetchArtistImage(artist) {
   } catch {
     return null;
   }
+}
+
+//Search 
+
+export async function apiSearchSongs(query) {
+  const res = await fetch(
+    `${API_BASE}/api/songs/search?q=${encodeURIComponent(query)}`
+  );
+  return res.json();
 }
