@@ -168,19 +168,19 @@ export async function apiGetLastfmConnectUrl() {
   return data.auth_url || null;
 }
 
-export async function apiScrobble(artist, track) {
+export async function apiScrobble(artist, track, album) {
   await fetch(`${API_BASE}/api/lastfm/scrobble`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ artist, track })
+    body: JSON.stringify({ artist, track, album })
   });
 }
 
-export async function apiUpdateNowPlaying(artist, track) {
+export async function apiUpdateNowPlaying(artist, track, album) {
   await fetch(`${API_BASE}/api/lastfm/now-playing`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ artist, track })
+    body: JSON.stringify({ artist, track, album })
   });
 }
 

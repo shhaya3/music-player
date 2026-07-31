@@ -98,6 +98,7 @@ def scrobble(current_user):
     data = request.get_json()
     artist = get_main_artist(data.get('artist'))
     track = data.get('track')
+    album  = data.get('album', '')
  
     params = {
         'method' : 'track.scrobble', 
@@ -107,6 +108,9 @@ def scrobble(current_user):
         'track': track,
         'timestamp': str(int(__import__('time').time()))
     }
+    if album:
+        params['album'] = album
+
     params['api_sig'] = get_api_sig(params, secret)
     params['format'] = 'json'
  
@@ -132,6 +136,7 @@ def now_playing(current_user):
     data   = request.get_json()
     artist = get_main_artist(data.get('artist'))
     track  = data.get('track')
+    album  = data.get('album', '')
  
     params = {
         'method': 'track.updateNowPlaying',
@@ -140,6 +145,9 @@ def now_playing(current_user):
         'artist': artist,
         'track': track
     }
+    if album:
+        params['album'] = album
+        
     params['api_sig'] = get_api_sig(params, secret)
     params['format']  = 'json'
  

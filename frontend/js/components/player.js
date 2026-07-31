@@ -54,7 +54,7 @@ function playTrackAtIndex(trackIndex) {
 
   // Last.fm now playing
   if (isLoggedIn()) {
-    apiUpdateNowPlaying(track.artist, track.title);
+    apiUpdateNowPlaying(track.artist, track.title, track.album || '');
   }
 }
 
@@ -93,9 +93,11 @@ audio.addEventListener('timeupdate', () => {
   if (!audio.duration || hasScrobbled) return;
   const pct = (audio.currentTime / audio.duration) * 100;
   if (pct >= 50 || audio.currentTime >= 240) {
-    hasScrobbled = true;
-    const track = PLAYING_TRACKS[queue[queuePos]];
-    if (track && isLoggedIn()) apiScrobble(track.artist, track.title);
+  hasScrobbled = true;
+  const track = PLAYING_TRACKS[queue[queuePos]];
+  if (track && isLoggedIn()) {
+    apiScrobble(track.artist, track.title, track.album || '');
+  }
   }
 });
 
@@ -117,34 +119,36 @@ repeatBtn.addEventListener('click', () => {
 
 //Volume
 
-const savedVol = parseFloat(localStorage.getItem('volume') || '0.8');
-audio.volume   = savedVol;
+const savedVol = parseFloat(localStorage.getItem('volume') || '80');
+audio.volume    = savedVol / 100;
 volSlider.value = savedVol;
-updateVolIcon(savedVol, false);
+updateVolIcon(savedVol / 100, false);
 volSlider.style.background =
-  `linear-gradient(to right, #a78bfa ${savedVol * 100}%, #334155 ${savedVol * 100}%)`;
+  `linear-gradient(to right, #a78bfa ${savedVol}%, #334155 ${savedVol}%)`;
 
 volSlider.addEventListener('input', () => {
-  const vol  = parseFloat(volSlider.value);
+  const val = parseFloat(volSlider.value);  // 0-100
+  const vol = val / 100;                    // 0-1 for audio
   audio.volume = vol;
   isMuted      = false;
   audio.muted  = false;
-  localStorage.setItem('volume', vol);
+  localStorage.setItem('volume', val);
   updateVolIcon(vol, false);
   volSlider.style.background =
-    `linear-gradient(to right, #a78bfa ${vol * 100}%, #334155 ${vol * 100}%)`;
+    `linear-gradient(to right, #a78bfa ${val}%, #334155 ${val}%)`;
 });
 
 muteBtn.addEventListener('click', () => {
   isMuted     = !isMuted;
   audio.muted = isMuted;
-  updateVolIcon(parseFloat(volSlider.value), isMuted);
+  const vol   = parseFloat(volSlider.value) / 100;
+  updateVolIcon(vol, isMuted);
   if (isMuted) {
     volSlider.style.background = `linear-gradient(to right, #a78bfa 0%, #334155 0%)`;
   } else {
-    const vol = parseFloat(volSlider.value);
+    const val = parseFloat(volSlider.value);
     volSlider.style.background =
-      `linear-gradient(to right, #a78bfa ${vol * 100}%, #334155 ${vol * 100}%)`;
+      `linear-gradient(to right, #a78bfa ${val}%, #334155 ${val}%)`;
   }
 });
 
