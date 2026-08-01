@@ -206,8 +206,16 @@ export async function apiFetchArtistImage(artist) {
 //Search 
 
 export async function apiSearchSongs(query) {
-  const res = await fetch(
-    `${API_BASE}/api/songs/search?q=${encodeURIComponent(query)}`
-  );
+  const res = await fetch(`${API_BASE}/api/songs/search?q=${encodeURIComponent(query)}`);
+  return res.json();
+}
+
+export async function apiSearchArtists(query) {
+  const res = await fetch(`${API_BASE}/api/artists/search?q=${encodeURIComponent(query)}`);
+  return res.json();
+}
+
+export async function apiSearchAlbums(query) {
+  const res = await fetch(`${API_BASE}/api/albums/search?q=${encodeURIComponent(query)}`);
   return res.json();
 }

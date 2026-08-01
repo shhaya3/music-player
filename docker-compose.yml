@@ -18,11 +18,15 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
     environment:
-      SECRET_KEY: ${SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY:-super-secret-dev-key-change-in-prod}
       DATABASE_URL: postgresql://musicuser:${POSTGRES_PASSWORD:-musicpass}@postgres:5432/musicdb
       MUSIC_DIR: /music
-      COVERS_DIR: /covers
+      COVERS_DIR: /cover
       BASE_URL: http://localhost:5000
       FRONTEND_URL: http://localhost:3000
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
@@ -31,7 +35,7 @@ services:
       LASTFM_SHARED_SECRET: ${LASTFM_SHARED_SECRET:-}
       FLASK_DEBUG: 'false'
     volumes:
-      - ${MUSIC_DIR:-./music}:/music:ro
+      - ${MUSIC_DIR:-./musicV2}:/music:ro
       - covers_data:/covers
     depends_on:
       postgres:

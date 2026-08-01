@@ -119,7 +119,7 @@ repeatBtn.addEventListener('click', () => {
 
 //Volume
 
-const savedVol = parseFloat(localStorage.getItem('volume') || '80');
+ const savedVol = parseFloat(localStorage.getItem('volume') || '80');
 audio.volume    = savedVol / 100;
 volSlider.value = savedVol;
 updateVolIcon(savedVol / 100, false);

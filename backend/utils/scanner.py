@@ -5,6 +5,21 @@ from mutagen.flac import FLAC
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError
 from models import db, Songs
+import re
+
+
+ARTIST_SPLIT_RE = re.compile(r'[;,&]|\bfeat\.?\b|\bft\.?\b|\bvs\.?\b|\bx\b', re.IGNORECASE)
+
+def get_main_artist(artist_string):
+    """Returns only the first/main artist from a multi-artist string."""
+    if not artist_string:
+        return 'Unknown'
+    parts = ARTIST_SPLIT_RE.split(str(artist_string))
+    return parts[0].strip() or 'Unknown'
+
+def get_all_artists(artist_string):
+    """Returns the full artist string cleaned up."""
+    return str(artist_string).strip() if artist_string else 'Unknown'
 
 
 def get_image_has(image_data):
@@ -26,6 +41,7 @@ def save_cover(image_data, cover_dir, base_url):
             f.write(image_data)
     
     return f'{base_url}/api/covers/{cover_filename}'
+
 
 
 def scan_music_folder(music_dir, covers_dir, base_url=''):
@@ -77,14 +93,18 @@ def scan_music_folder(music_dir, covers_dir, base_url=''):
             errors.append(f'{filename}: {str(e)}')
             continue
 
+        main_artist = get_main_artist(artist)
+        all_artists = get_all_artists(artist)
+
         song = Songs(
             title     = str(title),
-            artist    = str(artist),
+            artist    =  main_artist,
+            all_artists = all_artists,
             album     = str(album),
             duration  = float(duration),
             filename  = filename,
             file_url  = f'{base_url}/api/stream/{filename}',
-            cover_url = cover_url
+            cover_url = cover_url,
         )
         db.session.add(song)
         added += 1

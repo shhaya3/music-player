@@ -72,16 +72,10 @@ export function setMenuContext(viewName, playlistId) {
 }
 
 export function openTrackMenu(event, songId, trackIndex) {
-  // close existing menu if open
   if (activeMenu) { activeMenu.remove(); activeMenu = null; return; }
-
-  const btn  = event.target.closest('.track-menu-btn');
-  const rect = btn.getBoundingClientRect();
 
   const menu = document.createElement('div');
   menu.className = 'context-menu';
-  menu.style.top  = `${rect.bottom + 4}px`;
-  menu.style.left = `${Math.max(rect.left - 180, 8)}px`;
 
   menu.innerHTML = `
     ${currentCtxView === 'favourites' ? `
@@ -109,6 +103,26 @@ export function openTrackMenu(event, songId, trackIndex) {
   document.body.appendChild(menu);
   activeMenu = menu;
 
+  // ── Smart positioning ─────────────────────────────────────────────────────
+  // measure menu after adding to DOM
+  const menuH = menu.offsetHeight;
+  const menuW = menu.offsetWidth;
+  const winH  = window.innerHeight;
+  const winW  = window.innerWidth;
+
+  // use mouse position for both click and contextmenu events
+  const mouseX = event.clientX;
+  const mouseY = event.clientY;
+
+  // flip up if not enough space below
+  const top  = mouseY + menuH > winH ? mouseY - menuH : mouseY;
+  // flip left if not enough space to the right
+  const left = mouseX + menuW > winW ? mouseX - menuW : mouseX;
+
+  menu.style.top  = `${Math.max(0, top)}px`;
+  menu.style.left = `${Math.max(0, left)}px`;
+
+  // wire up actions
   menu.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', async e => {
       e.stopPropagation();
@@ -116,7 +130,7 @@ export function openTrackMenu(event, songId, trackIndex) {
       if      (action === 'favourite')       await addToFavourites(songId);
       else if (action === 'unfavourite')     await removeFromFavourites(songId);
       else if (action === 'queue')           addSongToQueue(trackIndex);
-      else if (action === 'playlist')        await showPlaylistPicker(songId, rect);
+      else if (action === 'playlist')        await showPlaylistPicker(songId, { clientX: mouseX, clientY: mouseY });
       else if (action === 'remove-playlist') await removeFromPlaylist(songId);
       menu.remove();
       activeMenu = null;
@@ -124,7 +138,7 @@ export function openTrackMenu(event, songId, trackIndex) {
   });
 
   function handleOutsideClick(e) {
-    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+    if (!menu.contains(e.target)) {
       menu.remove();
       activeMenu = null;
       document.removeEventListener('click', handleOutsideClick, true);

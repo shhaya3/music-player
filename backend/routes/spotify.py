@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, current_app
 from models import db, ArtistImageCache, Songs
 
+
+
 spotify_bp = Blueprint('spotify', __name__)
 
 # Token cache 
@@ -62,7 +64,18 @@ def get_artist_image(artist):
     if cached and not cached.is_expired(days=14):
         return jsonify({'image': cached.image_url})
 
-    image_url = fetch_from_spotify(artist)
+    song = Songs.query.filter(
+        (Songs.artist == artist) | (Songs.artist_romaji == artist)
+    ).first()
+
+    search_query = artist
+    if song and song.artist_romaji:
+        search_query = song.artist_romaji
+
+    image_url = fetch_from_spotify(search_query)
+
+    if not image_url and search_query != artist:
+        image_url = fetch_from_spotify(artist)
 
     if cached:
         cached.image_url  = image_url

@@ -7,6 +7,7 @@ import {
   apiFetchSongs, apiFetchArtistSongs, apiFetchAlbumSongs,
   apiFetchFavourites, apiFetchPlaylistSongs, apiFetchArtistImage,
   apiAddFavourite, apiRemoveFavourite, apiSearchSongs,
+  apiSearchAlbums, apiSearchArtists,
   apiAddSongToPlaylist, apiRemoveSongFromPlaylist,
   apiFetchPlaylists, escapeHtml, formatTime, isLoggedIn
 } from '../api/api.js';
@@ -16,16 +17,16 @@ import { openTrackMenu, showToast } from '../utils/ui.js';
 // State 
 
 export const audio = document.getElementById('audio-player');
-export let TRACKS  = [];          // what's shown in the current view
-let currentView    = 'songs';     // active view name
-let currentCtxId   = null;        // playlist id if in playlist view
+export let TRACKS = [];          // what's shown in the current view
+let currentView = 'songs';     // active view name
+let currentCtxId = null;        // playlist id if in playlist view
 
 // DOM elements 
 
-const viewTitle   = document.getElementById('view-title');
-const viewMeta    = document.getElementById('view-meta');
-const viewCover   = document.querySelector('.view-cover');
-const trackBody   = document.getElementById('track-list-body');
+const viewTitle = document.getElementById('view-title');
+const viewMeta = document.getElementById('view-meta');
+const viewCover = document.querySelector('.view-cover');
+const trackBody = document.getElementById('track-list-body');
 const searchInput = document.getElementById('search-input');
 const searchClear = document.getElementById('search-clear');
 
@@ -34,14 +35,14 @@ const searchClear = document.getElementById('search-clear');
 
 function clearSearch() {
   if (searchInput) {
-    searchInput.value  = '';
+    searchInput.value = '';
     searchClear.hidden = true;
-    isSearching        = false;
+    isSearching = false;
   }
 }
 
-let searchTimer   = null;
-let isSearching   = false;
+let searchTimer = null;
+let isSearching = false;
 
 searchInput.addEventListener('input', (e) => {
   clearTimeout(searchTimer);
@@ -55,26 +56,35 @@ searchInput.addEventListener('input', (e) => {
     return;
   }
 
-  // debounce — wait 300ms after user stops typing
   searchTimer = setTimeout(async () => {
     isSearching = true;
     try {
-      const results = await apiSearchSongs(q);
-      TRACKS = results;
+      // search all three in parallel
+      const [songs, artists, albums] = await Promise.all([
+        apiSearchSongs(q),
+        apiSearchArtists(q),
+        apiSearchAlbums(q),
+      ]);
+
+      TRACKS = songs;
       viewTitle.textContent = `Results for "${q}"`;
-      viewMeta.textContent  = `${results.length} songs`;
-      viewCover.src         = '';
+      viewMeta.textContent = `${songs.length} songs`;
+      viewCover.src = '';
       renderTrackList();
+
+      // show artist results below if any
     } catch (err) {
       console.error('Search failed:', err);
+    } finally {
+      isSearching = false;
     }
   }, 300);
 });
 
 searchClear.addEventListener('click', () => {
-  searchInput.value  = '';
+  searchInput.value = '';
   searchClear.hidden = true;
-  isSearching        = false;
+  isSearching = false;
   loadLibrary();
 });
 
@@ -85,14 +95,14 @@ export function renderTrackList() {
 
   const currentPlayingTrack = PLAYING_TRACKS[queue[queuePos]];
   TRACKS.forEach((track, i) => {
-    const tr      = document.createElement('tr');
+    const tr = document.createElement('tr');
     const isPlaying = currentPlayingTrack && currentPlayingTrack.id === track.id;
 
 
     if (isPlaying) {
       tr.classList.add('playing');
     }
-    
+
     tr.innerHTML = `
       <td class="track-num">${i + 1}</td>
       <td>${escapeHtml(track.title)}</td>
@@ -113,6 +123,11 @@ export function renderTrackList() {
     tr.addEventListener('click', e => {
       if (e.target.closest('.track-menu-btn') || e.target.closest('.artist-link')) return;
       buildQueue(TRACKS, i, playTrackAtIndex);
+    });
+
+    tr.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      openTrackMenu(e, track.id, i);
     });
 
     // click artist name — load artist view
@@ -143,13 +158,13 @@ export function highlightRow(trackIndex) {
 
 export async function loadLibrary() {
   clearSearch();
-  currentView  = 'songs';
+  currentView = 'songs';
   currentCtxId = null;
   try {
     TRACKS = await apiFetchSongs();
     viewTitle.textContent = 'Songs';
-    viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = 'assest/songs.png';
+    viewMeta.textContent = `${TRACKS.length} songs`;
+    viewCover.src = 'assest/songs.png';
     renderTrackList();
   } catch (err) {
     console.error('Could not load library:', err);
@@ -158,14 +173,14 @@ export async function loadLibrary() {
 
 export async function loadArtistSongs(artist) {
   clearSearch();
-  currentView  = 'artist';
+  currentView = 'artist';
   currentCtxId = null;
   try {
     TRACKS = await apiFetchArtistSongs(artist);
     viewTitle.textContent = artist;
-    viewMeta.textContent  = `${TRACKS.length} songs`;
+    viewMeta.textContent = `${TRACKS.length} songs`;
     const img = await apiFetchArtistImage(artist);
-    viewCover.src         = img || '';
+    viewCover.src = img || '';
     renderTrackList();
   } catch (err) {
     console.error('Could not load artist songs:', err);
@@ -174,13 +189,13 @@ export async function loadArtistSongs(artist) {
 
 export async function loadAlbumSongs(album) {
   clearSearch();
-  currentView  = 'album';
+  currentView = 'album';
   currentCtxId = null;
   try {
     TRACKS = await apiFetchAlbumSongs(album);
     viewTitle.textContent = album;
-    viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = TRACKS[0]?.cover || '';
+    viewMeta.textContent = `${TRACKS.length} songs`;
+    viewCover.src = TRACKS[0]?.cover || '';
     viewCover.style.borderRadius = '8px';
     renderTrackList();
   } catch (err) {
@@ -190,11 +205,11 @@ export async function loadAlbumSongs(album) {
 
 export async function loadFavourites() {
   clearSearch();
-  currentView  = 'favourites';
+  currentView = 'favourites';
   currentCtxId = null;
   if (!isLoggedIn()) {
     viewTitle.textContent = 'Liked Songs';
-    viewMeta.textContent  = 'Please log in to see favourites';
+    viewMeta.textContent = 'Please log in to see favourites';
     TRACKS = [];
     renderTrackList();
     return;
@@ -202,8 +217,8 @@ export async function loadFavourites() {
   try {
     TRACKS = await apiFetchFavourites();
     viewTitle.textContent = 'Liked Songs';
-    viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = 'assest/CoverImage/liked.png';
+    viewMeta.textContent = `${TRACKS.length} songs`;
+    viewCover.src = 'assest/CoverImage/liked.png';
     renderTrackList();
   } catch (err) {
     console.error('Could not load favourites:', err);
@@ -212,13 +227,13 @@ export async function loadFavourites() {
 
 export async function loadPlaylistSongs(playlistId, playlistName) {
   clearSearch();
-  currentView  = 'playlist';
+  currentView = 'playlist';
   currentCtxId = playlistId;
   try {
     TRACKS = await apiFetchPlaylistSongs(playlistId);
     viewTitle.textContent = playlistName;
-    viewMeta.textContent  = `${TRACKS.length} songs`;
-    viewCover.src         = 'assest/songs.png';
+    viewMeta.textContent = `${TRACKS.length} songs`;
+    viewCover.src = 'assest/songs.png';
     renderTrackList();
     highlightRow();
   } catch (err) {
@@ -250,7 +265,7 @@ export async function removeFromPlaylist(songId) {
 
 export function addSongToQueue(displayIndex) {
   // find this track's position in PLAYING_TRACKS
-  const song  = TRACKS[displayIndex];
+  const song = TRACKS[displayIndex];
   if (!song) return;
 
   // find its index in PLAYING_TRACKS
@@ -269,21 +284,27 @@ export function addSongToQueue(displayIndex) {
   showToast(`Added "${song.title}" to queue`);
 }
 
-export async function showPlaylistPicker(songId, rect) {
-  if (!isLoggedIn()) { alert('Please log in to add to playlists'); return; }
+export async function showPlaylistPicker(songId, eventOrRect) {
+  if (!isLoggedIn()) { 
+    alert('Please log in to add to playlists'); 
+    return; 
+  }
 
   const playlists = await apiFetchPlaylists();
-  if (!playlists.length) {
+  if (!playlists || !playlists.length) {
     alert('No playlists found — create one first');
     return;
   }
 
+  // Remove existing pickers
   document.querySelectorAll('.playlist-picker').forEach(p => p.remove());
 
   const picker = document.createElement('div');
   picker.className = 'context-menu playlist-picker';
-  picker.style.top  = `${rect.bottom + 4}px`;
-  picker.style.left = `${Math.max(rect.left - 180, 8)}px`;
+  picker.style.position = 'fixed'; // Ensure fixed positioning relative to viewport
+  picker.style.maxHeight = '200px';
+  picker.style.overflowY = 'auto';
+  picker.style.zIndex = '9999';
 
   picker.innerHTML = `
     <div class="menu-header">Add to Playlist</div>
@@ -296,27 +317,63 @@ export async function showPlaylistPicker(songId, rect) {
 
   document.body.appendChild(picker);
 
+  // Extract mouse position or bounding rect coordinates safely
+  let clientX = 0;
+  let clientY = 0;
+
+  if (eventOrRect instanceof MouseEvent || eventOrRect?.clientX !== undefined) {
+    clientX = eventOrRect.clientX;
+    clientY = eventOrRect.clientY;
+  } else if (eventOrRect instanceof DOMRect || (eventOrRect?.left !== undefined && eventOrRect?.top !== undefined)) {
+    clientX = eventOrRect.left;
+    clientY = eventOrRect.bottom; // Place menu directly below the element rect
+  }
+
+  // Smart positioning calculation
+  const menuH = picker.offsetHeight;
+  const menuW = picker.offsetWidth;
+  const top = clientY + menuH > window.innerHeight
+    ? clientY - menuH
+    : clientY;
+  const left = clientX + menuW > window.innerWidth
+    ? clientX - menuW
+    : clientX;
+
+  picker.style.top = `${Math.max(0, top)}px`;
+  picker.style.left = `${Math.max(0, left)}px`;
+
+  // Item click listener
   picker.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', async e => {
       e.stopPropagation();
-      await apiAddSongToPlaylist(item.dataset.pid, songId);
-      picker.remove();
+      try {
+        await apiAddSongToPlaylist(item.dataset.pid, songId);
+      } catch (err) {
+        console.error('Failed to add song to playlist:', err);
+      } finally {
+        picker.remove();
+      }
     });
   });
 
+  // Outside click listener
   function closePicker(e) {
     if (!picker.contains(e.target)) {
       picker.remove();
       document.removeEventListener('click', closePicker, true);
     }
   }
-  document.addEventListener('click', closePicker, true);
+
+  // Timeout ensures the initial trigger click doesn't immediately dismiss the picker
+  setTimeout(() => {
+    document.addEventListener('click', closePicker, true);
+  }, 0);
 }
 
 // Expose playTrackAtIndex for queue.js callbacks 
 // player.js will set this after it initialises
 
-export let playTrackAtIndex = () => {};
+export let playTrackAtIndex = () => { };
 export function setPlayTrackCallback(fn) { playTrackAtIndex = fn; }
 
 // Initial load 

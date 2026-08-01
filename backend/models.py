@@ -22,11 +22,15 @@ class Songs(db.Model):
     id          = db.Column(db.Integer,     primary_key=True)
     title       = db.Column(db.String(200), nullable=False)
     artist      = db.Column(db.String(200), default='Unknown')
+    all_artists = db.Column(db.String(500), nullable=True)
     album       = db.Column(db.String(200), default='Unknown')
     duration    = db.Column(db.Float,       default=0.0)
     filename    = db.Column(db.String(300), unique=True, nullable=False)
     file_url    = db.Column(db.String(500), nullable=True)
     cover_url   = db.Column(db.String(500), nullable=True)
+    title_romaji    = db.Column(db.String(200), nullable=True)   # for search
+    artist_romaji   = db.Column(db.String(200), nullable=True)   # for search
+    album_romaji    = db.Column(db.String(200), nullable=True)
     uploaded_by = db.Column(db.Integer,     db.ForeignKey('users.id'), nullable=True)
     created_at  = db.Column(db.DateTime,    default=datetime.utcnow)
 
@@ -39,11 +43,12 @@ class Songs(db.Model):
         return {
             'id':       self.id,
             'title':    self.title,
-            'artist':   self.artist,
+            'artist':   self.artist or 'Unknown',
+            'all_artists': self.all_artists or self.artist or 'Unknown',
             'album':    self.album,
             'duration': self.duration,
             'src':    f'{base_url}/api/stream/{self.id}',
-            'cover':  self.cover_url or f'{base_url}/api/covers/default.jpg'
+            'cover':  self.cover_url or f'{base_url}/api/covers/default.jpg',
         }
 
 class Playlist(db.Model):
